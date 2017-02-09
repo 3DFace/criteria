@@ -3,8 +3,8 @@
 
 namespace dface\criteria\parser;
 
-use dface\criteria\Node;
 use dface\criteria as C;
+use dface\criteria\Node;
 
 class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 

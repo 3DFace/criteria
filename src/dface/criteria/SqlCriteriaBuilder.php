@@ -4,36 +4,26 @@ namespace dface\criteria;
 
 class SqlCriteriaBuilder implements NodeVisitor {
 
-	protected $parameters;
-	protected $patternBuilder;
-	protected $referenceMapper;
+	private $referenceMapper;
 
-	function __construct(){
-		$this->parameters = [];
-	}
-
-	function build(Criteria $criteria, $referenceMapper = null){
-		$this->parameters = [];
+	function build(Node $criteria, $referenceMapper = null){
 		$this->referenceMapper = $referenceMapper;
-		$sql = $criteria->acceptNodeVisitor($this);
-		return array($sql, $this->parameters);
+		return $criteria->acceptNodeVisitor($this);
 	}
 
 	function visitConstant($value){
-		$this->parameters[] = $value;
-		return "{s}";
+		return ['{s}', [$value]];
 	}
 
 	function visitReference($name){
 		$mapper = $this->referenceMapper;
-		return $mapper ? $mapper($name) : $name;
+		return ['{i}',  [$mapper ? $mapper($name) : $name]];
 	}
 
 	function visitComparison(Operand $left, Operand $right, $operator){
-		return
-			$left->acceptNodeVisitor($this).
-			$operator.
-			$right->acceptNodeVisitor($this);
+		list($left_sql, $left_params) =  $left->acceptNodeVisitor($this);
+		list($right_sql, $right_params) =  $right->acceptNodeVisitor($this);
+		return [$left_sql.$operator.$right_sql, array_merge($left_params, $right_params)];
 	}
 
 	function visitEquals(Operand $left, Operand $right){
@@ -82,20 +72,28 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	 * @return string
 	 */
 	function visitIn(Operand $subj, array $set){
-		$subj = $subj->acceptNodeVisitor($this);
-		$result = [];
+		list($subj_sql, $subj_params) = $subj->acceptNodeVisitor($this);
+		$set_sql = [];
+		$set_params = [];
 		foreach($set as $operand){
-			$result[] = $operand->acceptNodeVisitor($this);
+			list($item_sql, $item_params) = $operand->acceptNodeVisitor($this);
+			$set_sql[] = $item_sql;
+			$set_params[] = $item_params;
 		}
-		return $subj.' IN ('.implode(', ', $result).')';
+		return [
+			$subj_sql.' IN ('.implode(', ', $set_sql).')',
+			array_merge($subj_params, ...$set_params),
+		];
 	}
 
-	function visitIsNull(Operand $subject){
-		return $subject->acceptNodeVisitor($this).' IS NULL';
+	function visitIsNull(Operand $subj){
+		list($subj_sql, $subj_params) = $subj->acceptNodeVisitor($this);
+		return[$subj_sql.' IS NULL', $subj_params];
 	}
 
-	function visitNotNull(Operand $subject){
-		return $subject->acceptNodeVisitor($this).' IS NOT NULL';
+	function visitNotNull(Operand $subj){
+		list($subj_sql, $subj_params) = $subj->acceptNodeVisitor($this);
+		return[$subj_sql.' IS NOT NULL', $subj_params];
 	}
 
 	/**
@@ -104,11 +102,17 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	 * @return string
 	 */
 	function visitLogical(array $members, $operator){
-		$result = [];
+		$members_sql = [];
+		$members_params = [];
 		foreach($members as $criteria){
-			$result[] = $criteria->acceptNodeVisitor($this);
+			list($m_sql, $m_params) = $criteria->acceptNodeVisitor($this);
+			$members_sql[] = $m_sql;
+			$members_params[] = $m_params;
 		}
-		return '('.implode(') '.$operator.' (', $result).')';
+		return [
+			'('.implode(') '.$operator.' (', $members_sql).')',
+			array_merge(...$members_params),
+		];
 	}
 
 	function visitAnd(array $members){
@@ -119,8 +123,9 @@ class SqlCriteriaBuilder implements NodeVisitor {
 		return $this->visitLogical($members, 'OR');
 	}
 
-	function visitNot(Criteria $criteria){
-		return 'NOT ('.$criteria->acceptNodeVisitor($this).')';
+	function visitNot(Criteria $subj){
+		list($subj_sql, $subj_params) = $subj->acceptNodeVisitor($this);
+		return ['NOT ('.$subj_sql.')', $subj_params];
 	}
 
 }
