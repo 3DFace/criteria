@@ -13,7 +13,7 @@ class SimpleComparator implements Comparator {
 				return ($v1 > $v2 ? 1 : -1);
 			}
 		}else{
-			return max(-1, min(1, strcmp($v1, $v2)));
+			return max(-1, min(1, strcmp((string)$v1, (string)$v2)));
 		}
 	}
 
