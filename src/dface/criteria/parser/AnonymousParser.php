@@ -88,7 +88,7 @@ class AnonymousParser {
 				case 'NUMBER':
 					$token = $this->getToken(0);
 					$this->sureConsume($type);
-					$members[] = new C\Match($this->operand, new C\Constant("%".$token->text."%"));
+					$members[] = new C\Match($this->operand, new C\StringConstant("%".$token->text."%"));
 					break;
 				default:
 					break 2;
@@ -140,7 +140,7 @@ class AnonymousParser {
 			case 'NUMBER':
 				$token = $this->getToken(0);
 				$this->sureConsume($type);
-				return new C\Match($this->operand, new C\Constant("%".$token->text."%"));
+				return new C\Match($this->operand, new C\StringConstant("%".$token->text."%"));
 			default:
 				$t = $this->getToken(0);
 				$loc = $t->location;
@@ -153,7 +153,7 @@ class AnonymousParser {
 		if($this->getType(0) === 'END'){
 			return new C\LogicalAnd(array(
 				new C\NotNull($this->operand),
-				new C\NotEquals($this->operand, new C\Constant('')),
+				new C\NotEquals($this->operand, new C\StringConstant('')),
 			));
 		}else{
 			return new C\LogicalNot($this->parseCriteria());
@@ -166,7 +166,7 @@ class AnonymousParser {
 		if($this->getType(0) === 'END'){
 			return new C\LogicalOr(array(
 				new C\IsNull($this->operand),
-				new C\Equals($this->operand, new C\Constant('')),
+				new C\Equals($this->operand, new C\StringConstant('')),
 			));
 		}else{
 			$c = $this->parseOperand();
@@ -179,7 +179,7 @@ class AnonymousParser {
 		if($this->getType(0) === 'END'){
 			return new C\LogicalAnd(array(
 				new C\NotNull($this->operand),
-				new C\NotEquals($this->operand, new C\Constant('')),
+				new C\NotEquals($this->operand, new C\StringConstant('')),
 			));
 		}else{
 			$c = $this->parseOperand();
@@ -192,7 +192,7 @@ class AnonymousParser {
 		if($this->getType(0) === 'END'){
 			return new C\LogicalAnd(array(
 				new C\NotNull($this->operand),
-				new C\Greater($this->operand, new C\Constant('')),
+				new C\Greater($this->operand, new C\StringConstant('')),
 			));
 		}else{
 			$c = $this->parseOperand();
@@ -276,13 +276,16 @@ class AnonymousParser {
 	protected function parseString(){
 		$token = $this->getToken(0);
 		$this->sureConsume('STRING');
-		return new C\Constant($token->text);
+		return new C\StringConstant($token->text);
 	}
 
 	protected function parseNumber(){
 		$token = $this->getToken(0);
 		$this->sureConsume('NUMBER');
-		return new C\Constant(str_replace(',', '.', $token->text));
+		$int = filter_var($token->text, FILTER_VALIDATE_INT);
+		return $int !== false
+			? new C\IntegerConstant($int)
+			: new C\FloatConstant($token->text);
 	}
 
 	protected function parseReference(){

@@ -5,15 +5,17 @@ namespace dface\criteria;
 
 class PredicateCriteriaBuilder implements NodeVisitor {
 
-	/** @var callable */
+	/** @var ObjectGraphNavigator */
+	private $navigator;
+	/** @var Comparator */
 	private $comparator;
 
-	/**
-	 * PredicateCriteriaBuilder constructor.
-	 * @param callable $customComparator
-	 */
-	public function __construct($customComparator = null){
-		$this->comparator = $customComparator ?: [self::class, 'defaultComparator'];
+	public function __construct(
+		ObjectGraphNavigator $navigator,
+		Comparator $comparator
+	){
+		$this->navigator = $navigator;
+		$this->comparator = $comparator;
 	}
 
 	function build(Node $criteria){
@@ -26,29 +28,32 @@ class PredicateCriteriaBuilder implements NodeVisitor {
 		};
 	}
 
-	function visitReference($name){
-		$path = explode('/', $name);
-		return function (array $x) use ($path){
-			foreach($path as $p){
-				if(!isset($x[$p])){
-					return null;
-				}
-				$x = $x[$p];
-			}
-			return $x;
+	function visitStringConstant($value){
+		return $this->visitConstant($value);
+	}
+
+	function visitBinaryConstant($value){
+		return $this->visitConstant($value);
+	}
+
+	function visitIntegerConstant($value){
+		return $this->visitConstant($value);
+	}
+
+	function visitFloatConstant($value){
+		return $this->visitConstant($value);
+	}
+
+	function visitNull(){
+		return function(){
+			return null;
 		};
 	}
 
-	static function defaultComparator($v1, $v2){
-		if(is_numeric($v1) && is_numeric($v2)){
-			if($v1 < $v2){
-				return $v1 > $v2 ? 1 : -1;
-			}else{
-				return $v1 > $v2 ? 1 : 0;
-			}
-		}else{
-			return max(-1, min(1, strcmp($v1, $v2)));
-		}
+	function visitReference($name){
+		return function ($x) use ($name){
+			return $this->navigator->getValue($x, $name);
+		};
 	}
 
 	function visitComparison(Operand $left, Operand $right, array $true_results){
@@ -57,8 +62,7 @@ class PredicateCriteriaBuilder implements NodeVisitor {
 		return function ($x) use ($true_results, $left_fn, $right_fn){
 			$left_val = $left_fn($x);
 			$right_val = $right_fn($x);
-			$cmp = $this->comparator;
-			$result = $cmp($left_val, $right_val);
+			$result = $this->comparator->compare($left_val, $right_val);
 			return in_array($result, $true_results, true);
 		};
 	}

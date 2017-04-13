@@ -97,13 +97,13 @@ class ExpressionParser {
 	protected function parseString(){
 		$token = $this->getToken(0);
 		$this->sureConsume('STRING');
-		return new C\Constant($token->text);
+		return new C\StringConstant($token->text);
 	}
 
 	protected function parseNumber(){
 		$token = $this->getToken(0);
 		$this->sureConsume('NUMBER');
-		return new C\Constant(0 + str_replace(',', '.', $token->text));
+		return new C\IntegerConstant(0 + str_replace(',', '.', $token->text));
 	}
 
 	protected function parseReference(){

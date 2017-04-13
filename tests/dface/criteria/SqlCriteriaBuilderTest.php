@@ -9,16 +9,22 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 	private $builder;
 	/** @var Reference */
 	private $ref1;
-	/** @var Constant */
+	/** @var StringConstant */
 	private $val1;
-	/** @var Constant */
+	/** @var IntegerConstant */
 	private $val2;
+	/** @var FloatConstant */
+	private $val3;
+	/** @var Constant */
+	private $val4;
 
 	protected function setUp(){
 		$this->builder = new SqlCriteriaBuilder();
 		$this->ref1 = new Reference('some/ref');
-		$this->val1 = new Constant(1);
-		$this->val2 = new Constant('asd');
+		$this->val1 = new StringConstant('asd');
+		$this->val2 = new IntegerConstant(1);
+		$this->val3 = new FloatConstant(1.39);
+		$this->val4 = new BinaryConstant(hex2bin('FF'));
 	}
 
 	function testReference(){
@@ -27,61 +33,76 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 			$this->builder->build($this->ref1));
 	}
 
+	function testNull(){
+		$this->assertEquals(
+			['null', []],
+			$this->builder->build(new TheNull()));
+	}
+
 	function testConstant(){
 		$this->assertEquals(
-			['{s}', [1]],
+			['{s}', ['asd']],
 			$this->builder->build($this->val1));
+		$this->assertEquals(
+			['{d}', [1]],
+			$this->builder->build($this->val2));
+		$this->assertEquals(
+			['{n}', [1.39]],
+			$this->builder->build($this->val3));
+		$this->assertEquals(
+			['{b}', [hex2bin('ff')]],
+			$this->builder->build($this->val4));
 	}
 
 	protected function assertComparison(Comparison $c, $operator){
 		$x = $this->builder->build($c);
-		$this->assertEquals(['{i}'.$operator.'{s}', ['some/ref', 1]], $x);
+		$this->assertEquals(['{i}'.$operator.'{d}', ['some/ref', 1]], $x);
 	}
 
 	function testEquals(){
-		$this->assertComparison(new Equals($this->ref1, $this->val1), '=');
+		$this->assertComparison(new Equals($this->ref1, $this->val2), '=');
 	}
 
 	function testNotEquals(){
-		$this->assertComparison(new NotEquals($this->ref1, $this->val1), '!=');
+		$this->assertComparison(new NotEquals($this->ref1, $this->val2), '!=');
 	}
 
 	function testGreater(){
-		$this->assertComparison(new Greater($this->ref1, $this->val1), '>');
+		$this->assertComparison(new Greater($this->ref1, $this->val2), '>');
 	}
 
 	function testGreaterOrEquals(){
-		$this->assertComparison(new GreaterOrEquals($this->ref1, $this->val1), '>=');
+		$this->assertComparison(new GreaterOrEquals($this->ref1, $this->val2), '>=');
 	}
 
 	function testLess(){
-		$this->assertComparison(new Less($this->ref1, $this->val1), '<');
+		$this->assertComparison(new Less($this->ref1, $this->val2), '<');
 	}
 
 	function testLessOrEquals(){
-		$this->assertComparison(new LessOrEquals($this->ref1, $this->val1), '<=');
+		$this->assertComparison(new LessOrEquals($this->ref1, $this->val2), '<=');
 	}
 
 	function testMatch(){
-		$this->assertComparison(new Match($this->ref1, $this->val1), ' LIKE ');
+		$this->assertComparison(new Match($this->ref1, $this->val2), ' LIKE ');
 	}
 
 	function testNotMatch(){
-		$this->assertComparison(new NotMatch($this->ref1, $this->val1), ' NOT LIKE ');
+		$this->assertComparison(new NotMatch($this->ref1, $this->val2), ' NOT LIKE ');
 	}
 
 	function testRegexp(){
-		$this->assertComparison(new Regexp($this->ref1, $this->val1), ' RLIKE ');
+		$this->assertComparison(new Regexp($this->ref1, $this->val2), ' RLIKE ');
 	}
 
 	function testNotRegexp(){
-		$this->assertComparison(new NotRegexp($this->ref1, $this->val1), ' NOT RLIKE ');
+		$this->assertComparison(new NotRegexp($this->ref1, $this->val2), ' NOT RLIKE ');
 	}
 
 	function testIn(){
-		$c = new In($this->ref1, [$this->val1, $this->val2]);
+		$c = new In($this->ref1, [$this->val2, $this->val1]);
 		$x = $this->builder->build($c);
-		$this->assertEquals(['{i} IN ({s}, {s})', ['some/ref', 1, 'asd']], $x);
+		$this->assertEquals(['{i} IN ({d}, {s})', ['some/ref', 1, 'asd']], $x);
 	}
 
 	function testIsNull(){
@@ -98,30 +119,30 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 
 	function testAnd(){
 		$c = new LogicalAnd([
-			new Equals($this->ref1, $this->val1),
-			new Greater($this->val1, $this->val2),
+			new Equals($this->ref1, $this->val2),
+			new Greater($this->val2, $this->val1),
 		]);
 		$x = $this->builder->build($c);
 		$this->assertEquals([
-			'({i}={s}) AND ({s}>{s})',
+			'({i}={d}) AND ({d}>{s})',
 			['some/ref', 1, 1, 'asd']], $x);
 	}
 
 	function testOr(){
 		$c = new LogicalOr([
-			new Equals($this->ref1, $this->val1),
-			new Greater($this->val1, $this->val2),
+			new Equals($this->ref1, $this->val2),
+			new Greater($this->val2, $this->val1),
 		]);
 		$x = $this->builder->build($c);
 		$this->assertEquals([
-			'({i}={s}) OR ({s}>{s})',
+			'({i}={d}) OR ({d}>{s})',
 			['some/ref', 1, 1, 'asd']], $x);
 	}
 
 	function testNot(){
-		$c = new LogicalNot(new Equals($this->ref1, $this->val1));
+		$c = new LogicalNot(new Equals($this->ref1, $this->val2));
 		$x = $this->builder->build($c);
-		$this->assertEquals(['NOT ({i}={s})', ['some/ref', 1]], $x);
+		$this->assertEquals(['NOT ({i}={d})', ['some/ref', 1]], $x);
 	}
 
 }

@@ -27,7 +27,7 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 		$lexer = new Lexer();
 		$this->parser = new ExpressionParser($lexer);
 		$ref = new C\Reference("x");
-		$con = new C\Constant(1);
+		$con = new C\IntegerConstant(1);
 		$this->equals = new C\Equals($ref, $con);
 		$this->greater = new C\Greater($ref, $con);
 		$this->greaterOrEquals = new C\GreaterOrEquals($ref, $con);
@@ -70,9 +70,9 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	function testLogical(){
-		$x = new C\Equals(new C\Reference('x'), new C\Constant(1));
-		$y = new C\Equals(new C\Reference('y'), new C\Constant(2));
-		$z = new C\Equals(new C\Reference('z'), new C\Constant(3));
+		$x = new C\Equals(new C\Reference('x'), new C\IntegerConstant(1));
+		$y = new C\Equals(new C\Reference('y'), new C\IntegerConstant(2));
+		$z = new C\Equals(new C\Reference('z'), new C\IntegerConstant(3));
 
 		$this->assertExpressionMatchNode('$x=1 & $y=2 & $z=3', new C\LogicalAnd([$x, $y, $z]));
 		$this->assertExpressionMatchNode('$x=1 && $y=2 && $z=3', new C\LogicalAnd([$x, $y, $z]));
@@ -96,8 +96,8 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	function testIn(){
-		$set = [new C\Constant(1), new C\Constant(2), new C\Constant(3)];
-		$bad_set = [new C\Constant(1), new C\Constant(2)];
+		$set = [new C\IntegerConstant(1), new C\IntegerConstant(2), new C\IntegerConstant(3)];
+		$bad_set = [new C\IntegerConstant(1), new C\IntegerConstant(2)];
 		$node = new C\In(new C\Reference('x'), $set);
 		$bad_node = new C\In(new C\Reference('x'), $bad_set);
 		$this->assertExpressionMatchNode('$x [1, 2, 3]', $node);

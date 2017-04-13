@@ -4,7 +4,15 @@ namespace dface\criteria;
 
 interface NodeVisitor {
 
-	function visitConstant($value);
+	function visitStringConstant($value);
+
+	function visitBinaryConstant($value);
+
+	function visitIntegerConstant($value);
+
+	function visitFloatConstant($value);
+
+	function visitNull();
 
 	function visitReference($name);
 

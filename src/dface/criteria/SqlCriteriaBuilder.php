@@ -11,8 +11,24 @@ class SqlCriteriaBuilder implements NodeVisitor {
 		return $criteria->acceptNodeVisitor($this);
 	}
 
-	function visitConstant($value){
+	function visitStringConstant($value){
 		return ['{s}', [$value]];
+	}
+
+	function visitBinaryConstant($value){
+		return ['{b}', [$value]];
+	}
+
+	function visitIntegerConstant($value){
+		return ['{d}', [$value]];
+	}
+
+	function visitFloatConstant($value){
+		return ['{n}', [$value]];
+	}
+
+	function visitNull(){
+		return ['null', []];
 	}
 
 	function visitReference($name){
