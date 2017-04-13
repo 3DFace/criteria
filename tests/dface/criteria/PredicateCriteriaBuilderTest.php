@@ -46,6 +46,7 @@ class PredicateCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 				'ref2' => 1,
 				'ref3' => 1.39,
 				'ref4' => hex2bin('FF'),
+				'ref5' => true,
 			],
 		];
 	}
@@ -60,6 +61,7 @@ class PredicateCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 		$this->assertPredicate($this->ref2, 1);
 		$this->assertPredicate($this->ref3, 1.39);
 		$this->assertPredicate($this->ref4, hex2bin('ff'));
+		$this->assertPredicate(new Reference('some/ref5'), true);
 	}
 
 	function testConstant(){
@@ -67,6 +69,7 @@ class PredicateCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 		$this->assertPredicate($this->val2, 1);
 		$this->assertPredicate($this->val3, 1.39);
 		$this->assertPredicate($this->val4, hex2bin('ff'));
+		$this->assertPredicate(new BoolConstant(true), true);
 	}
 
 	function testNull(){

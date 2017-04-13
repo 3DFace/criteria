@@ -12,6 +12,8 @@ interface NodeVisitor {
 
 	function visitFloatConstant($value);
 
+	function visitBoolConstant($value);
+
 	function visitNull();
 
 	function visitReference($name);

@@ -52,6 +52,12 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 			['{b}', [hex2bin('ff')]],
 			$this->builder->build($this->val4));
+		$this->assertEquals(
+			['{d}', [1]],
+			$this->builder->build(new BoolConstant(true)));
+		$this->assertEquals(
+			['{d}', [0]],
+			$this->builder->build(new BoolConstant(false)));
 	}
 
 	protected function assertComparison(Comparison $c, $operator){

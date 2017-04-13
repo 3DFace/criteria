@@ -44,6 +44,10 @@ class PredicateCriteriaBuilder implements NodeVisitor {
 		return $this->visitConstant($value);
 	}
 
+	function visitBoolConstant($value){
+		return $this->visitConstant($value);
+	}
+
 	function visitNull(){
 		return function(){
 			return null;

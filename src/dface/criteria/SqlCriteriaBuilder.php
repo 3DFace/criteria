@@ -27,6 +27,10 @@ class SqlCriteriaBuilder implements NodeVisitor {
 		return ['{n}', [$value]];
 	}
 
+	function visitBoolConstant($value){
+		return ['{d}', [$value ? 1 : 0]];
+	}
+
 	function visitNull(){
 		return ['null', []];
 	}
