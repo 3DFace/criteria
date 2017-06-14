@@ -33,6 +33,14 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 			$this->builder->build($this->ref1));
 	}
 
+	function testMappedReference(){
+		$this->assertEquals(
+			['HEX({i}.{i})', ['table','some/ref']],
+			$this->builder->build($this->ref1, function($ref){
+				return ['HEX({i}.{i})', ['table', $ref]];
+			}));
+	}
+
 	function testNull(){
 		$this->assertEquals(
 			['null', []],

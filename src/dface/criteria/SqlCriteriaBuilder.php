@@ -36,8 +36,11 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	}
 
 	function visitReference($name){
-		$mapper = $this->referenceMapper;
-		return ['{i}',  [$mapper ? $mapper($name) : $name]];
+		if($this->referenceMapper !== null){
+			$mapper = $this->referenceMapper;
+			return $mapper($name);
+		}
+		return ['{i}',  [$name]];
 	}
 
 	function visitComparison(Operand $left, Operand $right, $operator){
@@ -89,7 +92,7 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	/**
 	 * @param Operand $subj
 	 * @param Operand[] $set
-	 * @return string
+	 * @return array
 	 */
 	function visitIn(Operand $subj, array $set){
 		list($subj_sql, $subj_params) = $subj->acceptNodeVisitor($this);
@@ -119,7 +122,7 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	/**
 	 * @param Criteria[] $members
 	 * @param $operator
-	 * @return string
+	 * @return array
 	 */
 	function visitLogical(array $members, $operator){
 		$members_sql = [];
