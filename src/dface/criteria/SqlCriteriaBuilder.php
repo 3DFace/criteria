@@ -20,11 +20,11 @@ class SqlCriteriaBuilder implements NodeVisitor {
 	}
 
 	function visitIntegerConstant($value){
-		return ['{s}', [$value]];
+		return ['{d}', [$value]];
 	}
 
 	function visitFloatConstant($value){
-		return ['{s}', [$value]];
+		return ['{n}', [$value]];
 	}
 
 	function visitBoolConstant($value){

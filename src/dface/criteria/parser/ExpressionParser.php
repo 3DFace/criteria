@@ -14,10 +14,12 @@ class ExpressionParser {
 	protected $tokens;
 	protected $count;
 	protected $index;
+	protected $parseNumbers;
 
-	function __construct(Lexer $lexer){
+	function __construct(Lexer $lexer, $parseNumbers = false){
 		$this->END_CRITERIA_TOKEN = new Token(0, 'END', '');
 		$this->lexer = $lexer;
+		$this->parseNumbers = $parseNumbers;
 	}
 
 	function parse($pattern){
@@ -103,7 +105,13 @@ class ExpressionParser {
 	protected function parseNumber(){
 		$token = $this->getToken(0);
 		$this->sureConsume('NUMBER');
-		return new C\IntegerConstant(0 + str_replace(',', '.', $token->text));
+		if($this->parseNumbers){
+			$int = filter_var($token->text, FILTER_VALIDATE_INT);
+			return $int !== false
+				? new C\IntegerConstant($int)
+				: new C\FloatConstant($token->text);
+		}
+		return new C\StringConstant($token->text);
 	}
 
 	protected function parseReference(){

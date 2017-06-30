@@ -6,7 +6,7 @@ namespace dface\criteria\parser;
 use dface\criteria as C;
 use dface\criteria\Node;
 
-class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
+class ExpressionParserNoNumberTest extends \PHPUnit_Framework_TestCase {
 
 	/** @var ExpressionParser */
 	protected $parser;
@@ -25,9 +25,9 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	public function __construct($name = null, array $data = array(), $dataName = ''){
 		parent::__construct($name, $data, $dataName);
 		$lexer = new Lexer();
-		$this->parser = new ExpressionParser($lexer, true);
+		$this->parser = new ExpressionParser($lexer);
 		$ref = new C\Reference('x');
-		$con = new C\IntegerConstant(1);
+		$con = new C\StringConstant(1);
 		$this->equals = new C\Equals($ref, $con);
 		$this->greater = new C\Greater($ref, $con);
 		$this->greaterOrEquals = new C\GreaterOrEquals($ref, $con);
@@ -70,9 +70,9 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	function testLogical(){
-		$x = new C\Equals(new C\Reference('x'), new C\IntegerConstant(1));
-		$y = new C\Equals(new C\Reference('y'), new C\IntegerConstant(2));
-		$z = new C\Equals(new C\Reference('z'), new C\IntegerConstant(3));
+		$x = new C\Equals(new C\Reference('x'), new C\StringConstant(1));
+		$y = new C\Equals(new C\Reference('y'), new C\StringConstant(2));
+		$z = new C\Equals(new C\Reference('z'), new C\StringConstant(3));
 
 		$this->assertExpressionMatchNode('$x=1 & $y=2 & $z=3', new C\LogicalAnd([$x, $y, $z]));
 		$this->assertExpressionMatchNode('$x=1 && $y=2 && $z=3', new C\LogicalAnd([$x, $y, $z]));
@@ -96,8 +96,8 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	function testIn(){
-		$set = [new C\IntegerConstant(1), new C\IntegerConstant(2), new C\IntegerConstant(3)];
-		$bad_set = [new C\IntegerConstant(1), new C\IntegerConstant(2)];
+		$set = [new C\StringConstant(1), new C\StringConstant(2), new C\StringConstant(3)];
+		$bad_set = [new C\StringConstant(1), new C\StringConstant(2)];
 		$node = new C\In(new C\Reference('x'), $set);
 		$bad_node = new C\In(new C\Reference('x'), $bad_set);
 		$this->assertExpressionMatchNode('$x [1, 2, 3]', $node);
