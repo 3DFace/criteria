@@ -58,10 +58,10 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 			['{s}', ['asd']],
 			$this->builder->build($this->val1));
 		$this->assertEquals(
-			['{d}', [1]],
+			['{s}', [1]],
 			$this->builder->build($this->val2));
 		$this->assertEquals(
-			['{n}', [1.39]],
+			['{s}', [1.39]],
 			$this->builder->build($this->val3));
 		$this->assertEquals(
 			['{b}', [hex2bin('ff')]],
@@ -76,7 +76,7 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 
 	protected function assertComparison(Comparison $c, $operator){
 		$x = $this->builder->build($c);
-		$this->assertEquals(['{i}'.$operator.'{d}', ['some/ref', 1]], $x);
+		$this->assertEquals(['{i}'.$operator.'{s}', ['some/ref', 1]], $x);
 	}
 
 	function testEquals(){
@@ -122,7 +122,7 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 	function testIn(){
 		$c = new In($this->ref1, [$this->val2, $this->val1]);
 		$x = $this->builder->build($c);
-		$this->assertEquals(['{i} IN ({d}, {s})', ['some/ref', 1, 'asd']], $x);
+		$this->assertEquals(['{i} IN ({s}, {s})', ['some/ref', 1, 'asd']], $x);
 	}
 
 	function testIsNull(){
@@ -144,7 +144,7 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 		]);
 		$x = $this->builder->build($c);
 		$this->assertEquals([
-			'({i}={d}) AND ({d}>{s})',
+			'({i}={s}) AND ({s}>{s})',
 			['some/ref', 1, 1, 'asd']], $x);
 	}
 
@@ -155,14 +155,14 @@ class SqlCriteriaBuilderTest extends \PHPUnit_Framework_TestCase {
 		]);
 		$x = $this->builder->build($c);
 		$this->assertEquals([
-			'({i}={d}) OR ({d}>{s})',
+			'({i}={s}) OR ({s}>{s})',
 			['some/ref', 1, 1, 'asd']], $x);
 	}
 
 	function testNot(){
 		$c = new LogicalNot(new Equals($this->ref1, $this->val2));
 		$x = $this->builder->build($c);
-		$this->assertEquals(['NOT ({i}={d})', ['some/ref', 1]], $x);
+		$this->assertEquals(['NOT ({i}={s})', ['some/ref', 1]], $x);
 	}
 
 }
