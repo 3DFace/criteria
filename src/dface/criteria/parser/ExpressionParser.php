@@ -16,7 +16,7 @@ class ExpressionParser {
 	protected $index;
 
 	function __construct(Lexer $lexer){
-		$this->END_CRITERIA_TOKEN = new Token(0, 'END', "");
+		$this->END_CRITERIA_TOKEN = new Token(0, 'END', '');
 		$this->lexer = $lexer;
 	}
 
@@ -26,7 +26,7 @@ class ExpressionParser {
 		$this->count = count($this->tokens);
 
 		$topCriteria = [];
-		while($this->getType(0) != 'END'){
+		while($this->getType(0) !== 'END'){
 			$topCriteria[] = $this->parseOr();
 		}
 		switch(count($topCriteria)){
@@ -44,8 +44,8 @@ class ExpressionParser {
 	}
 
 	protected function sureConsume($type){
-		if($this->getType(0) != $type){
-			throw new ParseException($type." expected at ".$this->index, $this->index);
+		if($this->getType(0) !== $type){
+			throw new ParseException($type.' expected at '.$this->index, $this->index);
 		}
 		$this->consume();
 	}
@@ -88,7 +88,7 @@ class ExpressionParser {
 			case 'LEFT_BRACKET':
 				return $this->parseBrackets();
 			case 'END':
-				throw new ParseException("Unexpected end of input", $this->getToken(0)->location);
+				throw new ParseException('Unexpected end of input', $this->getToken(0)->location);
 			default:
 				return $this->parseExpression();
 		}
@@ -124,7 +124,7 @@ class ExpressionParser {
 			default:
 				$t = $this->getToken(0);
 				$loc = $t->location;
-				throw new ParseException("Unexpected ".$t->type." '".$t->text."' at ".$loc, $loc);
+				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
 		}
 	}
 
@@ -161,7 +161,7 @@ class ExpressionParser {
 			default:
 				$t = $this->getToken(0);
 				$loc = $t->location;
-				throw new ParseException("Unexpected ".$t->type." '".$t->text."' at ".$loc, $loc);
+				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
 		}
 	}
 

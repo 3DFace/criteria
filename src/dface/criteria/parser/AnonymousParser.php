@@ -18,7 +18,7 @@ class AnonymousParser {
 	protected $index;
 
 	function __construct(Lexer $lexer){
-		$this->END_CRITERIA_TOKEN = new Token(0, 'END', "");
+		$this->END_CRITERIA_TOKEN = new Token(0, 'END', '');
 		$this->lexer = $lexer;
 	}
 
@@ -29,7 +29,7 @@ class AnonymousParser {
 		$this->count = count($this->tokens);
 
 		$topCriteria = [];
-		while($this->getType(0) != 'END'){
+		while($this->getType(0) !== 'END'){
 			$topCriteria[] = $this->parseOr();
 		}
 		switch(count($topCriteria)){
@@ -47,8 +47,8 @@ class AnonymousParser {
 	}
 
 	protected function sureConsume($type){
-		if($this->getType(0) != $type){
-			throw new ParseException($type." expected at ".$this->index, $this->index);
+		if($this->getType(0) !== $type){
+			throw new ParseException($type.' expected at '.$this->index, $this->index);
 		}
 		$this->consume();
 	}
@@ -88,7 +88,7 @@ class AnonymousParser {
 				case 'NUMBER':
 					$token = $this->getToken(0);
 					$this->sureConsume($type);
-					$members[] = new C\Match($this->operand, new C\StringConstant("%".$token->text."%"));
+					$members[] = new C\Match($this->operand, new C\StringConstant('%'.$token->text.'%'));
 					break;
 				default:
 					break 2;
@@ -109,7 +109,7 @@ class AnonymousParser {
 			case 'LEFT_BRACKET':
 				return $this->parseBrackets();
 			case 'END':
-				throw new ParseException("Unexpected end of input", $this->getToken(0)->location);
+				throw new ParseException('Unexpected end of input', $this->getToken(0)->location);
 			case 'EQUALS':
 				return $this->parseEquals();
 			case 'NOT_EQUALS':
@@ -140,11 +140,11 @@ class AnonymousParser {
 			case 'NUMBER':
 				$token = $this->getToken(0);
 				$this->sureConsume($type);
-				return new C\Match($this->operand, new C\StringConstant("%".$token->text."%"));
+				return new C\Match($this->operand, new C\StringConstant('%'.$token->text.'%'));
 			default:
 				$t = $this->getToken(0);
 				$loc = $t->location;
-				throw new ParseException("Unexpected ".$t->type." '".$t->text."' at ".$loc, $loc);
+				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
 		}
 	}
 
@@ -155,10 +155,8 @@ class AnonymousParser {
 				new C\NotNull($this->operand),
 				new C\NotEquals($this->operand, new C\StringConstant('')),
 			));
-		}else{
-			return new C\LogicalNot($this->parseCriteria());
 		}
-
+		return new C\LogicalNot($this->parseCriteria());
 	}
 
 	protected function parseEquals(){
@@ -168,10 +166,9 @@ class AnonymousParser {
 				new C\IsNull($this->operand),
 				new C\Equals($this->operand, new C\StringConstant('')),
 			));
-		}else{
-			$c = $this->parseOperand();
-			return new C\Equals($this->operand, $c);
 		}
+		$c = $this->parseOperand();
+		return new C\Equals($this->operand, $c);
 	}
 
 	protected function parseNotEquals(){
@@ -181,10 +178,9 @@ class AnonymousParser {
 				new C\NotNull($this->operand),
 				new C\NotEquals($this->operand, new C\StringConstant('')),
 			));
-		}else{
-			$c = $this->parseOperand();
-			return new C\NotEquals($this->operand, $c);
 		}
+		$c = $this->parseOperand();
+		return new C\NotEquals($this->operand, $c);
 	}
 
 	protected function parseGreater(){
@@ -194,10 +190,9 @@ class AnonymousParser {
 				new C\NotNull($this->operand),
 				new C\Greater($this->operand, new C\StringConstant('')),
 			));
-		}else{
-			$c = $this->parseOperand();
-			return new C\Greater($this->operand, $c);
 		}
+		$c = $this->parseOperand();
+		return new C\Greater($this->operand, $c);
 	}
 
 	protected function parseGreaterOrEquals(){
@@ -306,7 +301,7 @@ class AnonymousParser {
 			default:
 				$t = $this->getToken(0);
 				$loc = $t->location;
-				throw new ParseException("Unexpected ".$t->type." '".$t->text."' at ".$loc, $loc);
+				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
 		}
 	}
 

@@ -75,6 +75,9 @@ class Lexer {
 			case '\'':
 				$text = '\'';
 				break;
+			case '\\':
+				$text = '\\';
+				break;
 			case $this->EOF:
 				throw new ParseException('Unexpected end of input', $this->index);
 			default:
