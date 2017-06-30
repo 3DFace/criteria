@@ -26,7 +26,7 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 		parent::__construct($name, $data, $dataName);
 		$lexer = new Lexer();
 		$this->parser = new ExpressionParser($lexer);
-		$ref = new C\Reference("x");
+		$ref = new C\Reference('x');
 		$con = new C\IntegerConstant(1);
 		$this->equals = new C\Equals($ref, $con);
 		$this->greater = new C\Greater($ref, $con);
@@ -52,9 +52,9 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 
 	function testReference(){
 		$this->assertExpressionMatchNode('$x=1', $this->equals);
-		$this->assertExpressionNotMatchNode("x=1", $this->equals);
+		$this->assertExpressionNotMatchNode('x=1', $this->equals);
 		$this->assertExpressionNotMatchNode("'x'=1", $this->equals);
-		$this->assertExpressionNotMatchNode("`y`=1", $this->equals);
+		$this->assertExpressionNotMatchNode('`y`=1', $this->equals);
 	}
 
 	function testConstant(){
@@ -64,9 +64,9 @@ class ExpressionParserTest extends \PHPUnit_Framework_TestCase {
 	}
 
 	protected function doComparisonTest(Node $x1_node, $operator, $bad_x1_node, $bad_operator){
-		$this->assertExpressionMatchNode('$x'.$operator."1", $x1_node);
-		$this->assertExpressionNotMatchNode('$x'.$operator."1", $bad_x1_node);
-		$this->assertExpressionNotMatchNode('$x'.$bad_operator."1", $x1_node);
+		$this->assertExpressionMatchNode('$x'.$operator.'1', $x1_node);
+		$this->assertExpressionNotMatchNode('$x'.$operator.'1', $bad_x1_node);
+		$this->assertExpressionNotMatchNode('$x'.$bad_operator.'1', $x1_node);
 	}
 
 	function testLogical(){
