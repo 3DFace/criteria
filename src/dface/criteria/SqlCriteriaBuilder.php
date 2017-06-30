@@ -40,7 +40,14 @@ class SqlCriteriaBuilder implements NodeVisitor {
 			$mapper = $this->referenceMapper;
 			return $mapper($name);
 		}
-		return ['{i}',  [$name]];
+		if(!is_array($name)){
+			$name = explode('.', $name);
+		}
+		if(count($name) === 1){
+			return ['{i}', $name];
+		}
+		$sql = implode('.', array_fill(0, count($name), '{i}'));
+		return [$sql, $name];
 	}
 
 	function visitComparison(Operand $left, Operand $right, $operator){
