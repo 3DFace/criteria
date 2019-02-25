@@ -223,10 +223,6 @@ class Lexer {
 					}
 					$token = new Token($location, 'GREATER', '>');
 					break 2;
-				case '@':
-					$this->consume();
-					$token = new Token($location, 'IN', '@');
-					break 2;
 				case '(':
 					$this->consume();
 					$token = new Token($location, 'LEFT_BRACKET', '(');
