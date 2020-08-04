@@ -1,10 +1,11 @@
-<?php /* author: Ponomarev Denis <ponomarev@gmail.com> */
+<?php
 
 namespace dface\criteria\parser;
 
-class Lexer {
+class Lexer
+{
 
-	static private $WORD_BOUNDS = array(
+	static private array $WORD_BOUNDS = [
 		'?',
 		'#',
 		'!',
@@ -21,45 +22,65 @@ class Lexer {
 		'\'',
 		'&',
 		'|',
-		',');
+		','
+	];
 
-	private $EOF = '<EOF>';
+	private string $EOF = '<EOF>';
 
-	var $expression;
-	var $index;
+	private string $expression;
+	private int $index;
 
-	function explode($expression){
+	/**
+	 * @param $expression
+	 * @return array
+	 * @throws ParseException
+	 */
+	public function explode($expression) : array
+	{
 		$this->expression = $expression;
 		$this->index = 0;
-		$list = array();
-		while(true){
+		$list = [];
+		while (true) {
 			$token = $this->getToken();
 			$list[] = $token;
-			if($token->type === 'END'){
+			if ($token->type === Token::END) {
 				break;
 			}
 		}
 		return $list;
 	}
 
-	protected function consume(){
+	private function consume() : void
+	{
 		$this->index++;
 	}
 
-	protected function get($i){
+	private function get(int $i) : string
+	{
 		$j = $this->index + $i;
-		return $j < strlen($this->expression) ? $this->expression[$j] : $this->EOF;
+		return $j < \strlen($this->expression) ? $this->expression[$j] : $this->EOF;
 	}
 
-	protected function sureConsume($match){
-		if($this->get(0) !== $match){
+	/**
+	 * @param string $match
+	 * @throws ParseException
+	 */
+	private function sureConsume(string $match) : void
+	{
+		if ($this->get(0) !== $match) {
 			throw new ParseException($match.' expected at '.$this->index, $this->index);
 		}
 		$this->consume();
 	}
 
-	protected function escaped($c){
-		switch($c){
+	/**
+	 * @param string $c
+	 * @return string
+	 * @throws ParseException
+	 */
+	private function escaped(string $c) : string
+	{
+		switch ($c) {
 			case 'n':
 				$text = "\n";
 				break;
@@ -86,193 +107,194 @@ class Lexer {
 		return $text;
 	}
 
-	protected function string($quota){
+	/**
+	 * @param string $quota
+	 * @return string
+	 * @throws ParseException
+	 */
+	private function quotedString(string $quota) : string
+	{
 		$location = $this->index;
 		$this->sureConsume($quota);
 		$text = '';
-		while(true){
+		while (true) {
 			$c = $this->get(0);
-			if($c === '\\'){
+			if ($c === '\\') {
 				$this->sureConsume('\\');
 				$c = $this->get(0);
 				$text .= $this->escaped($c);
 				$this->consume();
-			} else {
-				if($c === $quota){
+			}else {
+				if ($c === $quota) {
 					$this->consume();
 					break;
 				}
-				if($c === $this->EOF){
+				if ($c === $this->EOF) {
 					throw new ParseException('Quotation started at '.$location.' is not closed', $this->index);
 				}
 				$text .= $c;
 				$this->consume();
 			}
 		}
-		return new Token($location, 'STRING', $text);
+		return $text;
 	}
 
-	protected function literal(){
-		$location = $this->index;
+	private function literal() : string
+	{
 		$text = '';
-		while(true){
+		while (true) {
 			$c = $this->get(0);
-			if($c === $this->EOF || ctype_space($c) || in_array($c, self::$WORD_BOUNDS, true)){
+			if ($c === $this->EOF || \ctype_space($c) || \in_array($c, self::$WORD_BOUNDS, true)) {
 				break;
 			}
 			$text .= $c;
 			$this->consume();
 		}
-		if(is_numeric($text)){
-			return new Token($location, 'NUMBER', $text);
-		}
-		return new Token($location, 'STRING', $text);
+		return $text;
 	}
 
-	protected function reference(){
-		$this->sureConsume('$');
-		$location = $this->index;
-		$text = '';
-		while(true){
-			$c = $this->get(0);
-			if($c === $this->EOF || ctype_space($c) || in_array($c, self::$WORD_BOUNDS, true)){
-				break;
-			}
-			$text .= $c;
-			$this->consume();
-		}
-		return new Token($location, 'REFERENCE', $text);
-	}
-
-	protected function consumeSpace(){
-		while(ctype_space($this->get(0))){
+	private function consumeSpace() : void
+	{
+		while (\ctype_space($this->get(0))) {
 			$this->consume();
 		}
 	}
 
-	protected function getToken(){
+	/**
+	 * @return Token
+	 * @throws ParseException
+	 */
+	private function getToken() : Token
+	{
 		$token = null;
-		while(true){
+		while (true) {
 			$this->consumeSpace();
 			$c = $this->get(0);
 			$location = $this->index;
-			switch($c){
+			switch ($c) {
 				case '!':
 					$this->consume();
 					$this->consumeSpace();
-					switch($this->get(0)){
+					switch ($this->get(0)) {
 						case '=':
 							$this->consume();
 							$this->consumeSpace();
-							if($this->get(0) === '!'){
+							if ($this->get(0) === '!') {
 								$this->consume();
-								$token = new Token($location, 'NOT_NULL', '!=!');
-							}else{
-								$token = new Token($location, 'NOT_EQUALS', '!=');
+								$token = new Token(Token::NOT_NULL, '!=!', $location);
+							}else {
+								$token = new Token(Token::NOT_EQUALS, '!=', $location);
 							}
 							break 3;
 						case '~':
 							$this->consume();
-							$token = new Token($location, 'NOT_MATCH', '!~');
+							$token = new Token(Token::NOT_MATCH, '!~', $location);
 							break 3;
 						case '?':
 							$this->consume();
-							$token = new Token($location, 'NOT_REGEXP', '!?');
+							$token = new Token(Token::NOT_MATCH_REGEXP, '!?', $location);
 							break 3;
 						default:
-							$token = new Token($location, 'NOT', '!');
+							$token = new Token(Token::NOT, '!', $location);
 							break 3;
 					}
 				case '~':
 					$this->consume();
-					$token = new Token($location, 'MATCH', '~');
+					$token = new Token(Token::MATCH, '~', $location);
 					break 2;
 				case '?':
 					$this->consume();
-					$token = new Token($location, 'REGEXP', '?');
+					$token = new Token(Token::MATCH_REGEXP, '?', $location);
 					break 2;
 				case '=':
 					$this->consume();
 					$this->consumeSpace();
-					if($this->get(0) === '!'){
+					if ($this->get(0) === '!') {
 						$this->consume();
-						$token = new Token($location, 'IS_NULL', '=!');
-					}else{
-						$token = new Token($location, 'EQUALS', '=');
+						$token = new Token(Token::IS_NULL, '=!', $location);
+					}else {
+						$token = new Token(Token::EQUALS, '=', $location);
 					}
 					break 2;
 				case '#':
 					$this->consume();
-					$token = new Token($location, 'NOT_EQUALS', '#');
+					$token = new Token(Token::NOT_EQUALS, '#', $location);
 					break 2;
 				case '<':
 					$this->consume();
-					if($this->get(0) === '='){
+					if ($this->get(0) === '=') {
 						$this->consume();
-						$token = new Token($location, 'LESS_OR_EQUALS', '<=');
+						$token = new Token(Token::LESS_OR_EQUALS, '<=', $location);
 						break 2;
 					}
-					$token = new Token($location, 'LESS', '<');
+					$token = new Token(Token::LESS, '<', $location);
 					break 2;
 				case '>':
 					$this->consume();
-					if($this->get(0) === '='){
+					if ($this->get(0) === '=') {
 						$this->consume();
-						$token = new Token($location, 'GREATER_OR_EQUALS', '>=');
+						$token = new Token(Token::GREATER_OR_EQUALS, '>=', $location);
 						break 2;
 					}
-					$token = new Token($location, 'GREATER', '>');
+					$token = new Token(Token::GREATER, '>', $location);
 					break 2;
 				case '(':
 					$this->consume();
-					$token = new Token($location, 'LEFT_BRACKET', '(');
+					$token = new Token(Token::LEFT_BRACKET, '(', $location);
 					break 2;
 				case ')':
 					$this->consume();
-					$token = new Token($location, 'RIGHT_BRACKET', ')');
+					$token = new Token(Token::RIGHT_BRACKET, ')', $location);
 					break 2;
 				case '[':
 					$this->consume();
-					$token = new Token($location, 'LEFT_SQUARE_BRACKET', '[');
+					$token = new Token(Token::LEFT_SQUARE_BRACKET, '[', $location);
 					break 2;
 				case ']':
 					$this->consume();
-					$token = new Token($location, 'RIGHT_SQUARE_BRACKET', ']');
+					$token = new Token(Token::RIGHT_SQUARE_BRACKET, ']', $location);
 					break 2;
 				case ',':
 					$this->consume();
-					$token = new Token($location, 'COMA', ',');
+					$token = new Token(Token::COMA, ',', $location);
 					break 2;
 				case '"':
 				case '\'':
-					$token = $this->string($c);
+					$text = $this->quotedString($c);
+					$token = new Token(Token::STRING, $text, $location);
 					break 2;
 				case '$':
-					$token = $this->reference();
+					$this->consume();
+					$token = new Token(Token::REFERENCE, '$', $location);
 					break 2;
 				case '&':
 					$this->consume();
-					if($this->get(0) === '&'){
+					if ($this->get(0) === '&') {
 						$this->consume();
-						$token = new Token($location, 'AND', '&&');
-					} else{
-						$token = new Token($location, 'AND', '&');
+						$token = new Token(Token::LOGICAL_AND, '&&', $location);
+					}else {
+						$token = new Token(Token::LOGICAL_AND, '&', $location);
 					}
 					break 2;
 				case '|':
 					$this->consume();
-					if($this->get(0) === '|'){
+					if ($this->get(0) === '|') {
 						$this->consume();
-						$token = new Token($location, 'OR', '||');
-					} else{
-						$token = new Token($location, 'OR', '|');
+						$token = new Token(Token::LOGICAL_OR, '||', $location);
+					}else {
+						$token = new Token(Token::LOGICAL_OR, '|', $location);
 					}
 					break 2;
 				case $this->EOF:
-					$token = new Token($location, 'END', '');
+					$token = new Token(Token::END, '', $location);
 					break 2;
 				default:
-					$token = $this->literal();
+					$text = $this->literal();
+					if (\is_numeric($text)) {
+						$token = new Token(Token::NUMBER, $text, $location);
+					}else {
+						$token = new Token(Token::STRING, $text, $location);
+					}
 					break 2;
 			}
 

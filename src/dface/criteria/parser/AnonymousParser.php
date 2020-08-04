@@ -1,313 +1,289 @@
-<?php /* author: Ponomarev Denis <ponomarev@gmail.com> */
+<?php
 
 namespace dface\criteria\parser;
 
-use dface\criteria as C;
+use dface\criteria\node\Criteria;
+use dface\criteria\node\Equals;
+use dface\criteria\node\Greater;
+use dface\criteria\node\GreaterOrEquals;
+use dface\criteria\node\In;
+use dface\criteria\node\IsNull;
+use dface\criteria\node\Less;
+use dface\criteria\node\LessOrEquals;
+use dface\criteria\node\LogicalAnd;
+use dface\criteria\node\LogicalNot;
+use dface\criteria\node\LogicalOr;
+use dface\criteria\node\Match;
+use dface\criteria\node\MatchRegexp;
+use dface\criteria\node\NotEquals;
+use dface\criteria\node\NotMatch;
+use dface\criteria\node\NotMatchRegexp;
+use dface\criteria\node\NotNull;
+use dface\criteria\node\Operand;
+use dface\criteria\node\StringConstant;
 
-class AnonymousParser {
+class AnonymousParser extends AbstractParser
+{
 
-	protected $END_CRITERIA_TOKEN;
+	private Operand $operand;
+	private bool $allow_references;
 
-	/** @var Lexer */
-	protected $lexer;
-	/** @var C\Operand */
-	protected $operand;
-	/** @var Token[] */
-	protected $tokens;
-	protected $count;
-	protected $index;
-	protected $parseNumbers;
-
-	function __construct(Lexer $lexer, $parseNumbers = false){
-		$this->END_CRITERIA_TOKEN = new Token(0, 'END', '');
-		$this->lexer = $lexer;
-		$this->parseNumbers = $parseNumbers;
+	public function __construct(Lexer $lexer, bool $parse_numbers = false, bool $allow_references = false)
+	{
+		parent::__construct($lexer, $parse_numbers);
+		$this->allow_references = $allow_references;
 	}
 
-	function parse(C\Operand $operand, $pattern){
+	/**
+	 * @param Operand $operand
+	 * @param string $pattern
+	 * @return Criteria|null
+	 * @throws ParseException
+	 */
+	function parse(Operand $operand, string $pattern) : ?Criteria
+	{
 		$this->operand = $operand;
 		$this->tokens = $this->lexer->explode($pattern);
 		$this->index = 0;
-		$this->count = count($this->tokens);
-
-		$topCriteria = [];
-		while($this->getType(0) !== 'END'){
-			$topCriteria[] = $this->parseOr();
+		$this->count = \count($this->tokens);
+		if ($this->getType(0) === Token::END) {
+			return null;
 		}
-		switch(count($topCriteria)){
-			case 0:
-				return null;
-			case 1:
-				return $topCriteria[0];
-			default:
-				return new C\LogicalAnd($topCriteria);
-		}
+		return $this->parseOr();
 	}
 
-	protected function consume(){
-		$this->index++;
-	}
-
-	protected function sureConsume($type){
-		if($this->getType(0) !== $type){
-			throw new ParseException($type.' expected at '.$this->index, $this->index);
-		}
-		$this->consume();
-	}
-
-	protected function getType($i){
-		$j = $this->index + $i;
-		return $j < $this->count ? $this->tokens[$j]->type : 'END';
-	}
-
-	protected function getToken($i){
-		$j = $this->index + $i;
-		return $j < $this->count ? $this->tokens[$j] : $this->END_CRITERIA_TOKEN;
-	}
-
-	protected function parseOr(){
-		$members = [];
-		$members[] = $this->parseAnd();
-		while($this->getType(0) === 'OR'){
-			$this->consume();
-			$members[] = $this->parseAnd();
-		}
-		return count($members) > 1 ? new C\LogicalOr($members) : $members[0];
-	}
-
-	protected function parseAnd(){
-		$members = [];
-		$members[] = $this->parseCriteria();
-		while(true){
-			switch($type = $this->getType(0)){
-				case 'AND':
-					$this->consume();
-					$members[] = $this->parseCriteria();
-					break;
-				// т.к пробел работает как AND
-				// todo: исправить Lexer? добавить WHITE_SPACE?
-				case 'STRING':
-				case 'NUMBER':
-					$token = $this->getToken(0);
-					$this->sureConsume($type);
-					$members[] = new C\Match($this->operand, new C\StringConstant('%'.$token->text.'%'));
-					break;
-				default:
-					break 2;
-			}
-		}
-		while($this->getType(0) === 'AND'){
-			$this->consume();
-			$members[] = $this->parseCriteria();
-		}
-		return count($members) > 1 ? new C\LogicalAnd($members) : $members[0];
-	}
-
-	protected function parseCriteria(){
+	/**
+	 * @return Criteria
+	 * @throws ParseException
+	 */
+	protected function parseCriteria() : Criteria
+	{
 		$type = $this->getType(0);
-		switch($type){
-			case 'NOT':
+		switch ($type) {
+			case Token::NOT:
 				return $this->parseNot();
-			case 'LEFT_BRACKET':
+			case Token::LEFT_BRACKET:
 				return $this->parseBrackets();
-			case 'END':
+			case Token::END:
 				throw new ParseException('Unexpected end of input', $this->getToken(0)->location);
-			case 'EQUALS':
+			case Token::EQUALS:
 				return $this->parseEquals();
-			case 'NOT_EQUALS':
+			case Token::NOT_EQUALS:
 				return $this->parseNotEquals();
-			case 'MATCH':
+			case Token::MATCH:
 				return $this->parseMatch();
-			case 'NOT_MATCH':
+			case Token::NOT_MATCH:
 				return $this->parseNotMatch();
-			case 'REGEXP':
+			case Token::MATCH_REGEXP:
 				return $this->parseRegexp();
-			case 'NOT_REGEXP':
+			case Token::NOT_MATCH_REGEXP:
 				return $this->parseNotRegexp();
-			case 'GREATER':
+			case Token::GREATER:
 				return $this->parseGreater();
-			case 'GREATER_OR_EQUALS':
+			case Token::GREATER_OR_EQUALS:
 				return $this->parseGreaterOrEquals();
-			case 'LESS':
+			case Token::LESS:
 				return $this->parseLess();
-			case 'LESS_OR_EQUALS':
+			case Token::LESS_OR_EQUALS:
 				return $this->parseLessOrEquals();
-			case 'LEFT_SQUARE_BRACKET':
+			case Token::LEFT_SQUARE_BRACKET:
 				return $this->parseIn();
-			case 'IS_NULL':
+			case Token::IS_NULL:
 				return $this->parseIsNull();
-			case 'NOT_NULL':
+			case Token::NOT_NULL:
 				return $this->parseNotNull();
-			case 'STRING':
-			case 'NUMBER':
+			case Token::STRING:
+			case Token::NUMBER:
 				$token = $this->getToken(0);
 				$this->sureConsume($type);
-				return new C\Match($this->operand, new C\StringConstant('%'.$token->text.'%'));
+				return new Match($this->operand, new StringConstant('%'.$token->text.'%'));
 			default:
 				$t = $this->getToken(0);
-				$loc = $t->location;
-				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
+				throw new ParseException("Unexpected $t->type_name '$t->text' at $t->location", $t->location);
 		}
 	}
 
-	protected function parseNot(){
-		$this->sureConsume('NOT');
-		if($this->getType(0) === 'END'){
-			return new C\LogicalAnd(array(
-				new C\NotNull($this->operand),
-				new C\NotEquals($this->operand, new C\StringConstant('')),
+	/**
+	 * @return Criteria
+	 * @throws ParseException
+	 */
+	private function parseNot() : Criteria
+	{
+		$this->sureConsume(Token::NOT);
+		if ($this->getType(0) === Token::END) {
+			return new LogicalAnd(array(
+				new NotNull($this->operand),
+				new NotEquals($this->operand, new StringConstant('')),
 			));
 		}
-		return new C\LogicalNot($this->parseCriteria());
+		return new LogicalNot($this->parseCriteria());
 	}
 
-	protected function parseEquals(){
-		$this->sureConsume('EQUALS');
-		if($this->getType(0) === 'END'){
-			return new C\LogicalOr(array(
-				new C\IsNull($this->operand),
-				new C\Equals($this->operand, new C\StringConstant('')),
+	/**
+	 * @return Criteria
+	 * @throws ParseException
+	 */
+	private function parseEquals() : Criteria
+	{
+		$this->sureConsume(Token::EQUALS);
+		if ($this->getType(0) === Token::END) {
+			return new LogicalOr(array(
+				new IsNull($this->operand),
+				new Equals($this->operand, new StringConstant('')),
 			));
 		}
-		$c = $this->parseOperand();
-		return new C\Equals($this->operand, $c);
+		$c = $this->parseOperand($this->allow_references);
+		return new Equals($this->operand, $c);
 	}
 
-	protected function parseNotEquals(){
-		$this->sureConsume('NOT_EQUALS');
-		if($this->getType(0) === 'END'){
-			return new C\LogicalAnd(array(
-				new C\NotNull($this->operand),
-				new C\NotEquals($this->operand, new C\StringConstant('')),
+	/**
+	 * @return Criteria
+	 * @throws ParseException
+	 */
+	private function parseNotEquals() : Criteria
+	{
+		$this->sureConsume(Token::NOT_EQUALS);
+		if ($this->getType(0) === Token::END) {
+			return new LogicalAnd(array(
+				new NotNull($this->operand),
+				new NotEquals($this->operand, new StringConstant('')),
 			));
 		}
-		$c = $this->parseOperand();
-		return new C\NotEquals($this->operand, $c);
+		$c = $this->parseOperand($this->allow_references);
+		return new NotEquals($this->operand, $c);
 	}
 
-	protected function parseGreater(){
-		$this->sureConsume('GREATER');
-		if($this->getType(0) === 'END'){
-			return new C\LogicalAnd(array(
-				new C\NotNull($this->operand),
-				new C\Greater($this->operand, new C\StringConstant('')),
+	/**
+	 * @return Criteria
+	 * @throws ParseException
+	 */
+	private function parseGreater() : Criteria
+	{
+		$this->sureConsume(Token::GREATER);
+		if ($this->getType(0) === Token::END) {
+			return new LogicalAnd(array(
+				new NotNull($this->operand),
+				new Greater($this->operand, new StringConstant('')),
 			));
 		}
-		$c = $this->parseOperand();
-		return new C\Greater($this->operand, $c);
+		$c = $this->parseOperand($this->allow_references);
+		return new Greater($this->operand, $c);
 	}
 
-	protected function parseGreaterOrEquals(){
-		$this->sureConsume('GREATER_OR_EQUALS');
-		$c = $this->parseOperand();
-		return new C\GreaterOrEquals($this->operand, $c);
+	/**
+	 * @return GreaterOrEquals
+	 * @throws ParseException
+	 */
+	private function parseGreaterOrEquals() : GreaterOrEquals
+	{
+		$this->sureConsume(Token::GREATER_OR_EQUALS);
+		$c = $this->parseOperand($this->allow_references);
+		return new GreaterOrEquals($this->operand, $c);
 	}
 
-	protected function parseLess(){
-		$this->sureConsume('LESS');
-		$c = $this->parseOperand();
-		return new C\Less($this->operand, $c);
+	/**
+	 * @return Less
+	 * @throws ParseException
+	 */
+	private function parseLess() : Less
+	{
+		$this->sureConsume(Token::LESS);
+		$c = $this->parseOperand($this->allow_references);
+		return new Less($this->operand, $c);
 	}
 
-	protected function parseLessOrEquals(){
-		$this->sureConsume('LESS_OR_EQUALS');
-		$c = $this->parseOperand();
-		return new C\LessOrEquals($this->operand, $c);
+	/**
+	 * @return LessOrEquals
+	 * @throws ParseException
+	 */
+	private function parseLessOrEquals() : LessOrEquals
+	{
+		$this->sureConsume(Token::LESS_OR_EQUALS);
+		$c = $this->parseOperand($this->allow_references);
+		return new LessOrEquals($this->operand, $c);
 	}
 
-	protected function parseMatch(){
-		$this->sureConsume('MATCH');
-		$c = $this->parseOperand();
-		return new C\Match($this->operand, $c);
+	/**
+	 * @return Match
+	 * @throws ParseException
+	 */
+	private function parseMatch() : Match
+	{
+		$this->sureConsume(Token::MATCH);
+		$c = $this->parseOperand($this->allow_references);
+		return new Match($this->operand, $c);
 	}
 
-	protected function parseNotMatch(){
-		$this->sureConsume('NOT_MATCH');
-		$c = $this->parseOperand();
-		return new C\NotMatch($this->operand, $c);
+	/**
+	 * @return NotMatch
+	 * @throws ParseException
+	 */
+	private function parseNotMatch() : NotMatch
+	{
+		$this->sureConsume(Token::NOT_MATCH);
+		$c = $this->parseOperand($this->allow_references);
+		return new NotMatch($this->operand, $c);
 	}
 
-	protected function parseRegexp(){
-		$this->sureConsume('REGEXP');
-		$c = $this->parseOperand();
-		return new C\Regexp($this->operand, $c);
+	/**
+	 * @return MatchRegexp
+	 * @throws ParseException
+	 */
+	private function parseRegexp() : MatchRegexp
+	{
+		$this->sureConsume(Token::MATCH_REGEXP);
+		$c = $this->parseOperand($this->allow_references);
+		return new MatchRegexp($this->operand, $c);
 	}
 
-	protected function parseNotRegexp(){
-		$this->sureConsume('NOT_REGEXP');
-		$c = $this->parseOperand();
-		return new C\NotRegexp($this->operand, $c);
+	/**
+	 * @return NotMatchRegexp
+	 * @throws ParseException
+	 */
+	private function parseNotRegexp() : NotMatchRegexp
+	{
+		$this->sureConsume(Token::NOT_MATCH_REGEXP);
+		$c = $this->parseOperand($this->allow_references);
+		return new NotMatchRegexp($this->operand, $c);
 	}
 
-	protected function parseIn(){
+	/**
+	 * @return In
+	 * @throws ParseException
+	 */
+	private function parseIn() : In
+	{
 		$set = [];
-		$this->sureConsume('LEFT_SQUARE_BRACKET');
-		if($this->getType(0) !== 'RIGHT_SQUARE_BRACKET'){
-			$set[] = $this->parseOperand();
-			while($this->getType(0) !== 'RIGHT_SQUARE_BRACKET'){
-				$this->sureConsume('COMA');
-				$set[] = $this->parseOperand();
+		$this->sureConsume(Token::LEFT_SQUARE_BRACKET);
+		if ($this->getType(0) !== Token::RIGHT_SQUARE_BRACKET) {
+			$set[] = $this->parseOperand($this->allow_references);
+			while ($this->getType(0) !== Token::RIGHT_SQUARE_BRACKET) {
+				$this->sureConsume(Token::COMA);
+				$set[] = $this->parseOperand($this->allow_references);
 			}
 		}
-		$this->sureConsume('RIGHT_SQUARE_BRACKET');
-		return new C\In($this->operand, $set);
+		$this->sureConsume(Token::RIGHT_SQUARE_BRACKET);
+		return new In($this->operand, $set);
 	}
 
-	protected function parseIsNull(){
-		$this->sureConsume('IS_NULL');
-		return new C\IsNull($this->operand);
+	/**
+	 * @return IsNull
+	 * @throws ParseException
+	 */
+	private function parseIsNull() : IsNull
+	{
+		$this->sureConsume(Token::IS_NULL);
+		return new IsNull($this->operand);
 	}
 
-	protected function parseNotNull(){
-		$this->sureConsume('NOT_NULL');
-		return new C\NotNull($this->operand);
-	}
-
-	protected function parseBrackets(){
-		$this->sureConsume('LEFT_BRACKET');
-		$criteria = $this->parseOr();
-		$this->sureConsume('RIGHT_BRACKET');
-		return $criteria;
-	}
-
-	protected function parseString(){
-		$token = $this->getToken(0);
-		$this->sureConsume('STRING');
-		return new C\StringConstant($token->text);
-	}
-
-	protected function parseNumber(){
-		$token = $this->getToken(0);
-		$this->sureConsume('NUMBER');
-		if($this->parseNumbers){
-			$int = filter_var($token->text, FILTER_VALIDATE_INT);
-			return $int !== false
-				? new C\IntegerConstant($int)
-				: new C\FloatConstant($token->text);
-		}
-		return new C\StringConstant($token->text);
-	}
-
-	protected function parseReference(){
-		$token = $this->getToken(0);
-		$this->sureConsume('REFERENCE');
-		return new C\Reference($token->text);
-	}
-
-	protected function parseOperand() {
-		$type = $this->getType(0);
-		switch($type){
-			case 'STRING':
-				return $this->parseString();
-			case 'NUMBER':
-				return $this->parseNumber();
-//			case 'REFERENCE':
-//				return $this->parseReference();
-			default:
-				$t = $this->getToken(0);
-				$loc = $t->location;
-				throw new ParseException('Unexpected '.$t->type." '".$t->text."' at ".$loc, $loc);
-		}
+	/**
+	 * @return NotNull
+	 * @throws ParseException
+	 */
+	private function parseNotNull() : NotNull
+	{
+		$this->sureConsume(Token::NOT_NULL);
+		return new NotNull($this->operand);
 	}
 
 }

@@ -1,20 +1,23 @@
 <?php
-/* author: Ponomarev Denis <ponomarev@gmail.com> */
 
 namespace dface\criteria\parser;
 
-class LexerTest extends \PHPUnit_Framework_TestCase {
+use PHPUnit\Framework\TestCase;
 
-	function test1() {
+class LexerTest extends TestCase
+{
+
+	function test1() : void
+	{
 		$lexer = new Lexer();
 		$exp = $lexer->explode(<<<'TAG'
 ='\'\""\\a'
 TAG
 		);
-		$this->assertEquals([
-			new Token(0, 'EQUALS', '='),
-			new Token(1, 'STRING', '\'""\\a'),
-			new Token(11, 'END', ''),
+		self::assertEquals([
+			new Token(Token::EQUALS, '=', 0),
+			new Token(Token::STRING, '\'""\\a', 1),
+			new Token(Token::END, '', 11),
 		], $exp);
 
 	}

@@ -1,7 +1,8 @@
-<?php /* author: Ponomarev Denis <ponomarev@gmail.com> */
+<?php
 
 namespace dface\criteria\parser;
 
-class ParseException extends \Exception {
+class ParseException extends \Exception
+{
 }
-?>
+
