@@ -2,7 +2,7 @@
 
 namespace dface\criteria\node;
 
-class Match extends Comparison
+class MatchPattern extends Comparison
 {
 
 	public function acceptNodeVisitor(NodeVisitor $visitor)

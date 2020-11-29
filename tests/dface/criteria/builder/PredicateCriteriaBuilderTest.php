@@ -16,7 +16,7 @@ use dface\criteria\node\LessOrEquals;
 use dface\criteria\node\LogicalAnd;
 use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
 use dface\criteria\node\Node;
 use dface\criteria\node\NotEquals;
@@ -141,17 +141,17 @@ class PredicateCriteriaBuilderTest extends TestCase
 
 	public function testMatch() : void
 	{
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('asd')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('%asd%')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('%sd%')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('%as%')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('a_d')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('a%d')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('as_')), true);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('ass')), false);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('a%z')), false);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('a_s')), false);
-		$this->assertPredicate(new Match($this->ref1, new StringConstant('zxc')), false);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('asd')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('%asd%')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('%sd%')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('%as%')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('a_d')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('a%d')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('as_')), true);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('ass')), false);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('a%z')), false);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('a_s')), false);
+		$this->assertPredicate(new MatchPattern($this->ref1, new StringConstant('zxc')), false);
 	}
 
 	public function testNotMatch() : void

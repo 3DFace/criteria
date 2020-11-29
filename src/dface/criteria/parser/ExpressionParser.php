@@ -11,7 +11,7 @@ use dface\criteria\node\IsNull;
 use dface\criteria\node\Less;
 use dface\criteria\node\LessOrEquals;
 use dface\criteria\node\LogicalNot;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
 use dface\criteria\node\NotEquals;
 use dface\criteria\node\NotMatch;
@@ -183,14 +183,14 @@ class ExpressionParser extends AbstractParser
 
 	/**
 	 * @param Operand $left
-	 * @return Match
+	 * @return MatchPattern
 	 * @throws ParseException
 	 */
-	private function parseMatch(Operand $left) : Match
+	private function parseMatch(Operand $left) : MatchPattern
 	{
 		$this->sureConsume(Token::MATCH);
 		$right = $this->parseOperand(true);
-		return new Match($left, $right);
+		return new MatchPattern($left, $right);
 	}
 
 	/**

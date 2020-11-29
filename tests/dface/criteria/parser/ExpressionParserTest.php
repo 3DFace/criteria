@@ -12,7 +12,7 @@ use dface\criteria\node\Less;
 use dface\criteria\node\LessOrEquals;
 use dface\criteria\node\LogicalAnd;
 use dface\criteria\node\LogicalOr;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
 use dface\criteria\node\Node;
 use dface\criteria\node\NotEquals;
@@ -33,7 +33,7 @@ class ExpressionParserTest extends TestCase
 	private GreaterOrEquals $greaterOrEquals;
 	private Less $less;
 	private LessOrEquals $lessOrEquals;
-	private Match $match;
+	private MatchPattern $match;
 	private NotMatch $notMatch;
 	private MatchRegexp $regexp;
 	private NotMatchRegexp $notRegexp;
@@ -51,7 +51,7 @@ class ExpressionParserTest extends TestCase
 		$this->less = new Less($ref, $con);
 		$this->lessOrEquals = new LessOrEquals($ref, $con);
 		$this->notEquals = new NotEquals($ref, $con);
-		$this->match = new Match($ref, $con);
+		$this->match = new MatchPattern($ref, $con);
 		$this->notMatch = new NotMatch($ref, $con);
 		$this->regexp = new MatchRegexp($ref, $con);
 		$this->notRegexp = new NotMatchRegexp($ref, $con);

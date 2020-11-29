@@ -8,7 +8,7 @@ use dface\criteria\node\IntegerConstant;
 use dface\criteria\node\LogicalAnd;
 use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\Node;
 use dface\criteria\node\Reference;
 use dface\criteria\node\StringConstant;
@@ -72,10 +72,10 @@ class AnonymousParserTest extends TestCase
 	{
 		$this->assertExpressionMatchNode('qwe || asd !zxc',
 			new LogicalOr([
-				new Match($this->ref, new StringConstant('%qwe%')),
+				new MatchPattern($this->ref, new StringConstant('%qwe%')),
 				new LogicalAnd([
-					new Match($this->ref, new StringConstant('%asd%')),
-					new LogicalNot(new Match($this->ref, new StringConstant('%zxc%'))),
+					new MatchPattern($this->ref, new StringConstant('%asd%')),
+					new LogicalNot(new MatchPattern($this->ref, new StringConstant('%zxc%'))),
 				])
 			]));
 	}
@@ -86,13 +86,13 @@ class AnonymousParserTest extends TestCase
 			new Equals($this->ref, new StringConstant('a')),
 			new LogicalOr([
 				new Equals($this->ref, new StringConstant('b')),
-				new Match($this->ref, new StringConstant('%c%')),
+				new MatchPattern($this->ref, new StringConstant('%c%')),
 				new LogicalOr([
-					new Match($this->ref, new StringConstant('%d%')),
+					new MatchPattern($this->ref, new StringConstant('%d%')),
 					new LogicalAnd([
-						new Match($this->ref, new StringConstant('%e%')),
-						new Match($this->ref, new StringConstant('%f%')),
-						new Match($this->ref, new StringConstant('%g%')),
+						new MatchPattern($this->ref, new StringConstant('%e%')),
+						new MatchPattern($this->ref, new StringConstant('%f%')),
+						new MatchPattern($this->ref, new StringConstant('%g%')),
 					]),
 				])
 			])

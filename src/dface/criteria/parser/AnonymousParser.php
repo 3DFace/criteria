@@ -13,7 +13,7 @@ use dface\criteria\node\LessOrEquals;
 use dface\criteria\node\LogicalAnd;
 use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
 use dface\criteria\node\NotEquals;
 use dface\criteria\node\NotMatch;
@@ -96,7 +96,7 @@ class AnonymousParser extends AbstractParser
 			case Token::NUMBER:
 				$token = $this->getToken(0);
 				$this->sureConsume($type);
-				return new Match($this->operand, new StringConstant('%'.$token->text.'%'));
+				return new MatchPattern($this->operand, new StringConstant('%'.$token->text.'%'));
 			default:
 				$t = $this->getToken(0);
 				throw new ParseException("Unexpected $t->type_name '$t->text' at $t->location", $t->location);
@@ -204,14 +204,14 @@ class AnonymousParser extends AbstractParser
 	}
 
 	/**
-	 * @return Match
+	 * @return MatchPattern
 	 * @throws ParseException
 	 */
-	private function parseMatch() : Match
+	private function parseMatch() : MatchPattern
 	{
 		$this->sureConsume(Token::MATCH);
 		$c = $this->parseOperand($this->allow_references);
-		return new Match($this->operand, $c);
+		return new MatchPattern($this->operand, $c);
 	}
 
 	/**

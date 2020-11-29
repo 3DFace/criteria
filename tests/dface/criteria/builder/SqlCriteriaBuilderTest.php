@@ -18,7 +18,7 @@ use dface\criteria\node\LessOrEquals;
 use dface\criteria\node\LogicalAnd;
 use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
-use dface\criteria\node\Match;
+use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
 use dface\criteria\node\NotEquals;
 use dface\criteria\node\NotMatch;
@@ -140,7 +140,7 @@ class SqlCriteriaBuilderTest extends TestCase
 
 	function testMatch() : void
 	{
-		$this->assertComparison(new Match($this->ref1, $this->val2), ' LIKE ');
+		$this->assertComparison(new MatchPattern($this->ref1, $this->val2), ' LIKE ');
 	}
 
 	function testNotMatch() : void
