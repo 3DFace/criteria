@@ -6,14 +6,14 @@ class GettersGraphNavigator implements ObjectGraphNavigator
 {
 
 	/**
-	 * @param $arrGraph
-	 * @param $propertyPathName
+	 * @param $object
+	 * @param $property_path_name
 	 * @return mixed
 	 */
-	public function getValue($arrGraph, string $propertyPathName)
+	public function getValue($object, string $property_path_name)
 	{
-		$path = \explode('/', $propertyPathName);
-		$x = $arrGraph;
+		$path = \explode('/', $property_path_name);
+		$x = $object;
 		foreach ($path as $p) {
 			$getter = 'get'.\str_replace('_', '', \ucwords($p, '_'));
 			if (\is_object($x) && \method_exists($x, $getter)) {

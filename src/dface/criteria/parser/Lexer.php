@@ -166,140 +166,107 @@ class Lexer
 	 */
 	private function getToken() : Token
 	{
-		$token = null;
-		while (true) {
-			$this->consumeSpace();
-			$c = $this->get(0);
-			$location = $this->index;
-			switch ($c) {
-				case '!':
-					$this->consume();
-					$this->consumeSpace();
-					switch ($this->get(0)) {
-						case '=':
+		$this->consumeSpace();
+		$c = $this->get(0);
+		$location = $this->index;
+		switch ($c) {
+			case '!':
+				$this->consume();
+				$this->consumeSpace();
+				switch ($this->get(0)) {
+					case '=':
+						$this->consume();
+						$this->consumeSpace();
+						if ($this->get(0) === '!') {
 							$this->consume();
-							$this->consumeSpace();
-							if ($this->get(0) === '!') {
-								$this->consume();
-								$token = new Token(Token::NOT_NULL, '!=!', $location);
-							}else {
-								$token = new Token(Token::NOT_EQUALS, '!=', $location);
-							}
-							break 3;
-						case '~':
-							$this->consume();
-							$token = new Token(Token::NOT_MATCH, '!~', $location);
-							break 3;
-						case '?':
-							$this->consume();
-							$token = new Token(Token::NOT_MATCH_REGEXP, '!?', $location);
-							break 3;
-						default:
-							$token = new Token(Token::NOT, '!', $location);
-							break 3;
-					}
-				case '~':
-					$this->consume();
-					$token = new Token(Token::MATCH, '~', $location);
-					break 2;
-				case '?':
-					$this->consume();
-					$token = new Token(Token::MATCH_REGEXP, '?', $location);
-					break 2;
-				case '=':
-					$this->consume();
-					$this->consumeSpace();
-					if ($this->get(0) === '!') {
+							return new Token(Token::NOT_NULL, '!=!', $location);
+						}
+						return new Token(Token::NOT_EQUALS, '!=', $location);
+					case '~':
 						$this->consume();
-						$token = new Token(Token::IS_NULL, '=!', $location);
-					}else {
-						$token = new Token(Token::EQUALS, '=', $location);
-					}
-					break 2;
-				case '#':
-					$this->consume();
-					$token = new Token(Token::NOT_EQUALS, '#', $location);
-					break 2;
-				case '<':
-					$this->consume();
-					if ($this->get(0) === '=') {
+						return new Token(Token::NOT_MATCH, '!~', $location);
+					case '?':
 						$this->consume();
-						$token = new Token(Token::LESS_OR_EQUALS, '<=', $location);
-						break 2;
-					}
-					$token = new Token(Token::LESS, '<', $location);
-					break 2;
-				case '>':
+						return new Token(Token::NOT_MATCH_REGEXP, '!?', $location);
+					default:
+						return new Token(Token::NOT, '!', $location);
+				}
+			case '~':
+				$this->consume();
+				return new Token(Token::MATCH, '~', $location);
+			case '?':
+				$this->consume();
+				return new Token(Token::MATCH_REGEXP, '?', $location);
+			case '=':
+				$this->consume();
+				$this->consumeSpace();
+				if ($this->get(0) === '!') {
 					$this->consume();
-					if ($this->get(0) === '=') {
-						$this->consume();
-						$token = new Token(Token::GREATER_OR_EQUALS, '>=', $location);
-						break 2;
-					}
-					$token = new Token(Token::GREATER, '>', $location);
-					break 2;
-				case '(':
+					return new Token(Token::IS_NULL, '=!', $location);
+				}
+				return new Token(Token::EQUALS, '=', $location);
+			case '#':
+				$this->consume();
+				return new Token(Token::NOT_EQUALS, '#', $location);
+			case '<':
+				$this->consume();
+				if ($this->get(0) === '=') {
 					$this->consume();
-					$token = new Token(Token::LEFT_BRACKET, '(', $location);
-					break 2;
-				case ')':
+					return new Token(Token::LESS_OR_EQUALS, '<=', $location);
+				}
+				return new Token(Token::LESS, '<', $location);
+			case '>':
+				$this->consume();
+				if ($this->get(0) === '=') {
 					$this->consume();
-					$token = new Token(Token::RIGHT_BRACKET, ')', $location);
-					break 2;
-				case '[':
+					return new Token(Token::GREATER_OR_EQUALS, '>=', $location);
+				}
+				return new Token(Token::GREATER, '>', $location);
+			case '(':
+				$this->consume();
+				return new Token(Token::LEFT_BRACKET, '(', $location);
+			case ')':
+				$this->consume();
+				return new Token(Token::RIGHT_BRACKET, ')', $location);
+			case '[':
+				$this->consume();
+				return new Token(Token::LEFT_SQUARE_BRACKET, '[', $location);
+			case ']':
+				$this->consume();
+				return new Token(Token::RIGHT_SQUARE_BRACKET, ']', $location);
+			case ',':
+				$this->consume();
+				return new Token(Token::COMA, ',', $location);
+			case '"':
+			case '\'':
+				$text = $this->quotedString($c);
+				return new Token(Token::STRING, $text, $location);
+			case '$':
+				$this->consume();
+				return new Token(Token::REFERENCE, '$', $location);
+			case '&':
+				$this->consume();
+				if ($this->get(0) === '&') {
 					$this->consume();
-					$token = new Token(Token::LEFT_SQUARE_BRACKET, '[', $location);
-					break 2;
-				case ']':
+					return new Token(Token::LOGICAL_AND, '&&', $location);
+				}
+				return new Token(Token::LOGICAL_AND, '&', $location);
+			case '|':
+				$this->consume();
+				if ($this->get(0) === '|') {
 					$this->consume();
-					$token = new Token(Token::RIGHT_SQUARE_BRACKET, ']', $location);
-					break 2;
-				case ',':
-					$this->consume();
-					$token = new Token(Token::COMA, ',', $location);
-					break 2;
-				case '"':
-				case '\'':
-					$text = $this->quotedString($c);
-					$token = new Token(Token::STRING, $text, $location);
-					break 2;
-				case '$':
-					$this->consume();
-					$token = new Token(Token::REFERENCE, '$', $location);
-					break 2;
-				case '&':
-					$this->consume();
-					if ($this->get(0) === '&') {
-						$this->consume();
-						$token = new Token(Token::LOGICAL_AND, '&&', $location);
-					}else {
-						$token = new Token(Token::LOGICAL_AND, '&', $location);
-					}
-					break 2;
-				case '|':
-					$this->consume();
-					if ($this->get(0) === '|') {
-						$this->consume();
-						$token = new Token(Token::LOGICAL_OR, '||', $location);
-					}else {
-						$token = new Token(Token::LOGICAL_OR, '|', $location);
-					}
-					break 2;
-				case $this->EOF:
-					$token = new Token(Token::END, '', $location);
-					break 2;
-				default:
-					$text = $this->literal();
-					if (\is_numeric($text)) {
-						$token = new Token(Token::NUMBER, $text, $location);
-					}else {
-						$token = new Token(Token::STRING, $text, $location);
-					}
-					break 2;
-			}
-
+					return new Token(Token::LOGICAL_OR, '||', $location);
+				}
+				return new Token(Token::LOGICAL_OR, '|', $location);
+			case $this->EOF:
+				return new Token(Token::END, '', $location);
+			default:
+				$text = $this->literal();
+				if (\is_numeric($text)) {
+					return new Token(Token::NUMBER, $text, $location);
+				}
+				return new Token(Token::STRING, $text, $location);
 		}
-		return $token;
 	}
 
 }

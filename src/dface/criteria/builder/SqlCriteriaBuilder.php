@@ -99,34 +99,34 @@ class SqlCriteriaBuilder implements NodeVisitor
 		return $this->visitComparison($left, $right, '<=');
 	}
 
-	public function visitMatch(Operand $left, Operand $right) : array
+	public function visitMatch(Operand $subject, Operand $pattern) : array
 	{
-		return $this->visitComparison($left, $right, ' LIKE ');
+		return $this->visitComparison($subject, $pattern, ' LIKE ');
 	}
 
-	public function visitNotMatch(Operand $left, Operand $right) : array
+	public function visitNotMatch(Operand $subject, Operand $pattern) : array
 	{
-		return $this->visitComparison($left, $right, ' NOT LIKE ');
+		return $this->visitComparison($subject, $pattern, ' NOT LIKE ');
 	}
 
-	public function visitMatchRegexp(Operand $left, Operand $right) : array
+	public function visitMatchRegexp(Operand $subject, Operand $pattern) : array
 	{
-		return $this->visitComparison($left, $right, ' RLIKE ');
+		return $this->visitComparison($subject, $pattern, ' RLIKE ');
 	}
 
-	public function visitNotMatchRegexp(Operand $left, Operand $right) : array
+	public function visitNotMatchRegexp(Operand $subject, Operand $pattern) : array
 	{
-		return $this->visitComparison($left, $right, ' NOT RLIKE ');
+		return $this->visitComparison($subject, $pattern, ' NOT RLIKE ');
 	}
 
 	/**
-	 * @param Operand $subj
+	 * @param Operand $subject
 	 * @param Operand[] $set
 	 * @return array
 	 */
-	public function visitIn(Operand $subj, array $set) : array
+	public function visitIn(Operand $subject, array $set) : array
 	{
-		[$subj_sql, $subj_params] = $subj->acceptNodeVisitor($this);
+		[$subj_sql, $subj_params] = $subject->acceptNodeVisitor($this);
 		$set_sql = [];
 		$set_params = [];
 		foreach ($set as $operand) {
@@ -140,15 +140,15 @@ class SqlCriteriaBuilder implements NodeVisitor
 		];
 	}
 
-	public function visitIsNull(Operand $subj) : array
+	public function visitIsNull(Operand $subject) : array
 	{
-		[$subj_sql, $subj_params] = $subj->acceptNodeVisitor($this);
+		[$subj_sql, $subj_params] = $subject->acceptNodeVisitor($this);
 		return [$subj_sql.' IS NULL', $subj_params];
 	}
 
-	public function visitNotNull(Operand $subj) : array
+	public function visitNotNull(Operand $subject) : array
 	{
-		[$subj_sql, $subj_params] = $subj->acceptNodeVisitor($this);
+		[$subj_sql, $subj_params] = $subject->acceptNodeVisitor($this);
 		return [$subj_sql.' IS NOT NULL', $subj_params];
 	}
 
@@ -182,10 +182,39 @@ class SqlCriteriaBuilder implements NodeVisitor
 		return $this->visitLogical($members, 'OR');
 	}
 
-	public function visitNot(Criteria $subj) : array
+	public function visitNot(Criteria $criteria) : array
 	{
-		[$subj_sql, $subj_params] = $subj->acceptNodeVisitor($this);
+		[$subj_sql, $subj_params] = $criteria->acceptNodeVisitor($this);
 		return ['NOT ('.$subj_sql.')', $subj_params];
 	}
 
+	function visitAddition(Operand $left, Operand $right) : array
+	{
+		return $this->visitArithmeticBinary($left, $right, '+');
+	}
+
+	function visitSubtraction(Operand $left, Operand $right) : array
+	{
+		return $this->visitArithmeticBinary($left, $right, '-');
+	}
+
+	function visitMultiplication(Operand $left, Operand $right) : array
+	{
+		return $this->visitArithmeticBinary($left, $right, '*');
+	}
+
+	function visitDivision(Operand $left, Operand $right) : array
+	{
+		return $this->visitArithmeticBinary($left, $right, '/');
+	}
+
+	private function visitArithmeticBinary(Operand $left, Operand $right, string $operator) : array
+	{
+		[$left_sql, $left_params] = $left->acceptNodeVisitor($this);
+		[$right_sql, $right_params] = $right->acceptNodeVisitor($this);
+		return [
+			'('.$left_sql.$operator.$right_sql.')',
+			\array_merge($left_params, $right_params),
+		];
+	}
 }

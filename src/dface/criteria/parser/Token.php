@@ -75,7 +75,7 @@ class Token
 		$this->location = $location;
 	}
 
-	public function __toString()
+	public function __toString() : string
 	{
 		return $this->type_name.'('.$this->location.'){'.$this->text.'}';
 	}

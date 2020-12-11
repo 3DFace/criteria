@@ -2,8 +2,10 @@
 
 namespace dface\criteria\builder;
 
+use dface\criteria\node\Addition;
 use dface\criteria\node\BinaryConstant;
 use dface\criteria\node\BoolConstant;
+use dface\criteria\node\Division;
 use dface\criteria\node\Equals;
 use dface\criteria\node\FloatConstant;
 use dface\criteria\node\Greater;
@@ -18,6 +20,7 @@ use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
 use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
+use dface\criteria\node\Multiplication;
 use dface\criteria\node\Node;
 use dface\criteria\node\NotEquals;
 use dface\criteria\node\NotMatch;
@@ -25,6 +28,7 @@ use dface\criteria\node\NotMatchRegexp;
 use dface\criteria\node\NotNull;
 use dface\criteria\node\Reference;
 use dface\criteria\node\StringConstant;
+use dface\criteria\node\Subtraction;
 use dface\criteria\node\TheNull;
 use PHPUnit\Framework\TestCase;
 
@@ -230,6 +234,30 @@ class PredicateCriteriaBuilderTest extends TestCase
 	{
 		$this->assertPredicate(new LogicalNot(new Equals($this->ref, $this->val3)), true);
 		$this->assertPredicate(new LogicalNot(new Equals($this->ref, $this->val2)), false);
+	}
+
+	function testAddition() : void
+	{
+		$c = new Addition(new IntegerConstant(1), new IntegerConstant(2));
+		$this->assertPredicate($c, 3);
+	}
+
+	function testSubtraction() : void
+	{
+		$c = new Subtraction(new IntegerConstant(1), new IntegerConstant(2));
+		$this->assertPredicate($c, -1);
+	}
+
+	function testMultiplication() : void
+	{
+		$c = new Multiplication(new IntegerConstant(1), new IntegerConstant(2));
+		$this->assertPredicate($c, 2);
+	}
+
+	function testDivision() : void
+	{
+		$c = new Division(new IntegerConstant(1), new IntegerConstant(2));
+		$this->assertPredicate($c, 0.5);
 	}
 
 }

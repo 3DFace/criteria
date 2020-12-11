@@ -62,6 +62,14 @@ interface NodeVisitor
 	 */
 	function visitOr(array $members);
 
-	function visitNot(Criteria $not);
+	function visitNot(Criteria $criteria);
+
+	function visitAddition(Operand $left, Operand $right);
+
+	function visitSubtraction(Operand $left, Operand $right);
+
+	function visitMultiplication(Operand $left, Operand $right);
+
+	function visitDivision(Operand $left, Operand $right);
 
 }

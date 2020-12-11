@@ -2,10 +2,12 @@
 
 namespace dface\criteria\builder;
 
+use dface\criteria\node\Addition;
 use dface\criteria\node\BinaryConstant;
 use dface\criteria\node\BoolConstant;
 use dface\criteria\node\Comparison;
 use dface\criteria\node\Constant;
+use dface\criteria\node\Division;
 use dface\criteria\node\Equals;
 use dface\criteria\node\FloatConstant;
 use dface\criteria\node\Greater;
@@ -20,12 +22,14 @@ use dface\criteria\node\LogicalNot;
 use dface\criteria\node\LogicalOr;
 use dface\criteria\node\MatchPattern;
 use dface\criteria\node\MatchRegexp;
+use dface\criteria\node\Multiplication;
 use dface\criteria\node\NotEquals;
 use dface\criteria\node\NotMatch;
 use dface\criteria\node\NotMatchRegexp;
 use dface\criteria\node\NotNull;
 use dface\criteria\node\Reference;
 use dface\criteria\node\StringConstant;
+use dface\criteria\node\Subtraction;
 use dface\criteria\node\TheNull;
 use PHPUnit\Framework\TestCase;
 
@@ -210,6 +214,34 @@ class SqlCriteriaBuilderTest extends TestCase
 		$c = new LogicalNot(new Equals($this->ref1, $this->val2));
 		$x = $this->builder->build($c);
 		self::assertEquals(['NOT ({i}={d})', ['some/ref', 1]], $x);
+	}
+
+	function testAddition() : void
+	{
+		$c = new Addition(new IntegerConstant(1), new IntegerConstant(2));
+		$x = $this->builder->build($c);
+		self::assertEquals(['({d}+{d})', [1, 2]], $x);
+	}
+
+	function testSubtraction() : void
+	{
+		$c = new Subtraction(new IntegerConstant(1), new IntegerConstant(2));
+		$x = $this->builder->build($c);
+		self::assertEquals(['({d}-{d})', [1, 2]], $x);
+	}
+
+	function testMultiplication() : void
+	{
+		$c = new Multiplication(new IntegerConstant(1), new IntegerConstant(2));
+		$x = $this->builder->build($c);
+		self::assertEquals(['({d}*{d})', [1, 2]], $x);
+	}
+
+	function testDivision() : void
+	{
+		$c = new Division(new IntegerConstant(1), new IntegerConstant(2));
+		$x = $this->builder->build($c);
+		self::assertEquals(['({d}/{d})', [1, 2]], $x);
 	}
 
 }

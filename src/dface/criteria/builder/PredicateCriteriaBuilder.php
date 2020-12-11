@@ -114,10 +114,10 @@ class PredicateCriteriaBuilder implements NodeVisitor
 		return $this->visitComparison($left, $right, [-1, 0]);
 	}
 
-	public function visitMatch(Operand $left, Operand $right) : callable
+	public function visitMatch(Operand $subject, Operand $pattern) : callable
 	{
-		$left_fn = $left->acceptNodeVisitor($this);
-		$right_fn = $right->acceptNodeVisitor($this);
+		$left_fn = $subject->acceptNodeVisitor($this);
+		$right_fn = $pattern->acceptNodeVisitor($this);
 		return static function ($x) use ($left_fn, $right_fn) {
 			$subject = $left_fn($x);
 			$pattern = $right_fn($x);
@@ -127,10 +127,10 @@ class PredicateCriteriaBuilder implements NodeVisitor
 		};
 	}
 
-	public function visitNotMatch(Operand $left, Operand $right) : callable
+	public function visitNotMatch(Operand $subject, Operand $pattern) : callable
 	{
-		$left_fn = $left->acceptNodeVisitor($this);
-		$right_fn = $right->acceptNodeVisitor($this);
+		$left_fn = $subject->acceptNodeVisitor($this);
+		$right_fn = $pattern->acceptNodeVisitor($this);
 		return static function ($x) use ($left_fn, $right_fn) {
 			$subject = $left_fn($x);
 			$pattern = $right_fn($x);
@@ -140,10 +140,10 @@ class PredicateCriteriaBuilder implements NodeVisitor
 		};
 	}
 
-	public function visitMatchRegexp(Operand $left, Operand $right) : callable
+	public function visitMatchRegexp(Operand $subject, Operand $pattern) : callable
 	{
-		$left_fn = $left->acceptNodeVisitor($this);
-		$right_fn = $right->acceptNodeVisitor($this);
+		$left_fn = $subject->acceptNodeVisitor($this);
+		$right_fn = $pattern->acceptNodeVisitor($this);
 		return static function ($x) use ($left_fn, $right_fn) {
 			$subject = $left_fn($x);
 			$pattern = $right_fn($x);
@@ -151,10 +151,10 @@ class PredicateCriteriaBuilder implements NodeVisitor
 		};
 	}
 
-	public function visitNotMatchRegexp(Operand $left, Operand $right) : callable
+	public function visitNotMatchRegexp(Operand $subject, Operand $pattern) : callable
 	{
-		$left_fn = $left->acceptNodeVisitor($this);
-		$right_fn = $right->acceptNodeVisitor($this);
+		$left_fn = $subject->acceptNodeVisitor($this);
+		$right_fn = $pattern->acceptNodeVisitor($this);
 		return static function ($x) use ($left_fn, $right_fn) {
 			$subject = $left_fn($x);
 			$pattern = $right_fn($x);
@@ -163,13 +163,13 @@ class PredicateCriteriaBuilder implements NodeVisitor
 	}
 
 	/**
-	 * @param Operand $subj
+	 * @param Operand $subject
 	 * @param Operand[] $set
 	 * @return callable
 	 */
-	public function visitIn(Operand $subj, array $set) : callable
+	public function visitIn(Operand $subject, array $set) : callable
 	{
-		$subj_fn = $subj->acceptNodeVisitor($this);
+		$subj_fn = $subject->acceptNodeVisitor($this);
 		$set_fn = [];
 		foreach ($set as $operand) {
 			$set_fn[] = $operand->acceptNodeVisitor($this);
@@ -243,6 +243,45 @@ class PredicateCriteriaBuilder implements NodeVisitor
 		return static function ($x) use ($criteria_fn) {
 			return !$criteria_fn($x);
 		};
+	}
+
+	private function visitArithmeticBinary(Operand $left, Operand $right, callable $operator) : callable
+	{
+		$left_accessor = $left->acceptNodeVisitor($this);
+		$right_accessor = $right->acceptNodeVisitor($this);
+		return static function ($x) use ($left_accessor, $right_accessor, $operator) {
+			$left_val = $left_accessor($x);
+			$right_val = $right_accessor($x);
+			return $operator($left_val, $right_val);
+		};
+	}
+
+	function visitAddition(Operand $left, Operand $right) : callable
+	{
+		return $this->visitArithmeticBinary($left, $right, function($v1, $v2){
+			return $v1 + $v2;
+		});
+	}
+
+	function visitSubtraction(Operand $left, Operand $right) : callable
+	{
+		return $this->visitArithmeticBinary($left, $right, function($v1, $v2){
+			return $v1 - $v2;
+		});
+	}
+
+	function visitMultiplication(Operand $left, Operand $right) : callable
+	{
+		return $this->visitArithmeticBinary($left, $right, function($v1, $v2){
+			return $v1 * $v2;
+		});
+	}
+
+	function visitDivision(Operand $left, Operand $right) : callable
+	{
+		return $this->visitArithmeticBinary($left, $right, function($v1, $v2){
+			return $v1 / $v2;
+		});
 	}
 
 }
