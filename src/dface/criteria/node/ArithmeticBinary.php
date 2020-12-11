@@ -2,7 +2,7 @@
 
 namespace dface\criteria\node;
 
-abstract class ArithmeticBinary implements Criteria
+abstract class ArithmeticBinary extends Operand
 {
 
 	protected Operand $left;
