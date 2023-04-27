@@ -84,7 +84,7 @@ abstract class AbstractParser
 		$members = [];
 		$members[] = $this->parseCriteria();
 		while (true) {
-			switch ($type = $this->getType(0)) {
+			switch ($this->getType(0)) {
 				case Token::LOGICAL_OR:
 				case Token::END:
 				case Token::RIGHT_BRACKET:

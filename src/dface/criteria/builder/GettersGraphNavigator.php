@@ -7,7 +7,7 @@ class GettersGraphNavigator implements ObjectGraphNavigator
 
 	/**
 	 * @param $object
-	 * @param $property_path_name
+	 * @param string $property_path_name
 	 * @return mixed
 	 */
 	public function getValue($object, string $property_path_name)

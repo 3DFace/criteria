@@ -123,7 +123,6 @@ class Lexer
 				$this->sureConsume('\\');
 				$c = $this->get(0);
 				$text .= $this->escaped($c);
-				$this->consume();
 			}else {
 				if ($c === $quota) {
 					$this->consume();
@@ -133,8 +132,8 @@ class Lexer
 					throw new ParseException('Quotation started at '.$location.' is not closed', $this->index);
 				}
 				$text .= $c;
-				$this->consume();
 			}
+			$this->consume();
 		}
 		return $text;
 	}
