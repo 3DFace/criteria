@@ -29,5 +29,10 @@
     "psr-0": {
       "dface\\criteria\\": "tests/"
     }
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.5"
+    }
   }
 }
