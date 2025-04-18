@@ -14,10 +14,11 @@
     }
   ],
   "require": {
-    "php": "^7.4"
+    "php": "^7.4|^8.0",
+    "ext-ctype": "*"
   },
   "require-dev": {
-    "phpunit/phpunit": "^9.2"
+    "phpunit/phpunit": "^10.1"
   },
   "autoload": {
     "psr-0": {
@@ -27,6 +28,11 @@
   "autoload-dev": {
     "psr-0": {
       "dface\\criteria\\": "tests/"
+    }
+  },
+  "config": {
+    "platform": {
+      "php": "8.2.5"
     }
   }
 }
