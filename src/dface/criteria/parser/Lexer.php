@@ -102,7 +102,7 @@ class Lexer
 			case $this->EOF:
 				throw new ParseException('Unexpected end of input', $this->index);
 			default:
-				$text = '\\'.$c;
+				$text = $c;
 		}
 		return $text;
 	}
@@ -146,7 +146,13 @@ class Lexer
 			if ($c === $this->EOF || \ctype_space($c) || \in_array($c, self::$WORD_BOUNDS, true)) {
 				break;
 			}
-			$text .= $c;
+			if ($c === '\\') {
+				$this->sureConsume('\\');
+				$c = $this->get(0);
+				$text .= $this->escaped($c);
+			}else {
+				$text .= $c;
+			}
 			$this->consume();
 		}
 		return $text;
